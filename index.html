@@ -12,18 +12,18 @@
     }
     #game {
       display: grid;
-      grid-template-columns: repeat(15, 40px);
-      grid-template-rows: repeat(15, 40px);
-      gap: 2px;
+      grid-template-columns: repeat(15, 16px);
+      grid-template-rows: repeat(15, 16px);
+      gap: 1px;
       margin: 20px auto;
       width: fit-content;
     }
     .cell {
-      width: 40px;
-      height: 40px;
+      width: 16px;
+      height: 16px;
       background-color: #1c1f2b;
-      border-radius: 4px;
-      transition: background-color 0.2s ease, transform 0.2s ease;
+      border-radius: 2px;
+      transition: background-color 0.2s ease;
     }
     .player {
       background-color: #00ff99;
@@ -36,13 +36,13 @@
     }
     #reward {
       display: none;
-      margin-top: 20px;
-      font-size: 20px;
+      margin-top: 15px;
+      font-size: 16px;
       color: #ffff66;
     }
     #level {
-      margin-top: 10px;
-      font-size: 16px;
+      margin-top: 8px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -74,7 +74,6 @@
 
     function generateConnectedMaze() {
       maze = Array(size).fill().map(() => Array(size).fill("wall"));
-
       function carve(x, y) {
         maze[y][x] = "empty";
         const dirs = shuffle([
@@ -92,7 +91,6 @@
           }
         }
       }
-
       carve(1, 1);
     }
 
