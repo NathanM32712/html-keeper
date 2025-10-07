@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Diddy Capture Simulator</title>
+  <style>
+    body {
+      background-color: #0b0f1a;
+      color: #00bfff;
+      font-family: monospace;
+      text-align: center;
+    }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(15, 40px);
+      grid-template-rows: repeat(15, 40px);
+      gap: 2px;
+      margin: 20px auto;
+      width: fit-content;
+    }
+    .cell {
+      width: 40px;
+      height: 40px;
+      background-color: #1c1f2b;
+      border-radius: 4px;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .player {
+      background-color: #00ff99;
+    }
+    .diddy {
+      background-color: #ff0055;
+    }
+    .wall {
+      background-color: #333;
+    }
+    #reward {
+      display: none;
+      margin-top: 20px;
+      font-size: 20px;
+      color: #ffff66;
+    }
+    #level {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Diddy Capture Simulator</h1>
+  <div id="level">Level: 1</div>
+  <div id="game"></div>
+  <div id="reward">🎉 You caught a Diddy! +100 coins</div>
+
+  <script>
+    const game = document.getElementById("game");
+    const levelDisplay = document.getElementById("level");
+    const rewardDisplay = document.getElementById("reward");
+    const size = 15;
+    let level = 1;
+    let playerPos = { x: 1, y: 1 };
+    let diddys = [];
+    let maze = [];
+    let heldDirection = null;
+    let moveInterval = null;
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function generateConnectedMaze() {
+      maze = Array(size).fill().map(() => Array(size).fill("wall"));
+
+      function carve(x, y) {
+        maze[y][x] = "empty";
+        const dirs = shuffle([
+          { dx: 2, dy: 0 },
+          { dx: -2, dy: 0 },
+          { dx: 0, dy: 2 },
+          { dx: 0, dy: -2 }
+        ]);
+        for (const { dx, dy } of dirs) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx > 0 && ny > 0 && nx < size - 1 && ny < size - 1 && maze[ny][nx] === "wall") {
+            maze[y + dy / 2][x + dx / 2] = "empty";
+            carve(nx, ny);
+          }
+        }
+      }
+
+      carve(1, 1);
+    }
+
+    function isOpenArea(x, y) {
+      const dirs = [
+        { dx: 1, dy: 0 },
+        { dx: -1, dy: 0 },
+        { dx: 0, dy: 1 },
+        { dx: 0, dy: -1 }
+      ];
+      return dirs.filter(dir => {
+        const nx = x + dir.dx;
+        const ny = y + dir.dy;
+        return nx >= 0 && ny >= 0 && nx < size && ny < size && maze[ny][nx] === "empty";
+      }).length >= 3;
+    }
+
+    function spawnDiddys(count) {
+      diddys = [];
+      let attempts = 0;
+      while (diddys.length < count && attempts < 1000) {
+        const x = Math.floor(Math.random() * size);
+        const y = Math.floor(Math.random() * size);
+        if (
+          maze[y][x] === "empty" &&
+          !(x === playerPos.x && y === playerPos.y) &&
+          isOpenArea(x, y)
+        ) {
+          diddys.push({ x, y });
+        }
+        attempts++;
+      }
+    }
+
+    function draw() {
+      game.innerHTML = "";
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const cell = document.createElement("div");
+          cell.classList.add("cell");
+          if (maze[y][x] === "wall") cell.classList.add("wall");
+          if (x === playerPos.x && y === playerPos.y) cell.classList.add("player");
+          if (diddys.some(d => d.x === x && d.y === y)) cell.classList.add("diddy");
+          game.appendChild(cell);
+        }
+      }
+    }
+
+    function movePlayer(dx, dy) {
+      const nx = playerPos.x + dx;
+      const ny = playerPos.y + dy;
+      if (nx < 0 || ny < 0 || nx >= size || ny >= size) return;
+      if (maze[ny][nx] === "wall") return;
+      playerPos = { x: nx, y: ny };
+      checkCapture();
+      draw();
+    }
+
+    function moveDiddys() {
+      diddys.forEach(diddy => {
+        const dirs = shuffle([
+          { dx: 1, dy: 0 },
+          { dx: -1, dy: 0 },
+          { dx: 0, dy: 1 },
+          { dx: 0, dy: -1 }
+        ]);
+        for (const dir of dirs) {
+          const nx = diddy.x + dir.dx;
+          const ny = diddy.y + dir.dy;
+          if (nx >= 0 && ny >= 0 && nx < size && ny < size && maze[ny][nx] === "empty") {
+            diddy.x = nx;
+            diddy.y = ny;
+            break;
+          }
+        }
+      });
+      draw();
+    }
+
+    function checkCapture() {
+      const caughtIndex = diddys.findIndex(d => d.x === playerPos.x && d.y === playerPos.y);
+      if (caughtIndex !== -1) {
+        diddys.splice(caughtIndex, 1);
+        rewardDisplay.style.display = "block";
+        setTimeout(() => {
+          rewardDisplay.style.display = "none";
+        }, 1500);
+
+        if (diddys.length === 0) {
+          level++;
+          if (level > 25) {
+            levelDisplay.textContent = "🎉 You completed all 25 levels!";
+            return;
+          }
+          levelDisplay.textContent = `Level: ${level}`;
+          generateConnectedMaze();
+          spawnDiddys(level);
+          playerPos = { x: 1, y: 1 };
+          draw();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", e => {
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        heldDirection = e.key;
+        if (!moveInterval) {
+          moveInterval = setInterval(() => {
+            if (heldDirection === "ArrowUp") movePlayer(0, -1);
+            if (heldDirection === "ArrowDown") movePlayer(0, 1);
+            if (heldDirection === "ArrowLeft") movePlayer(-1, 0);
+            if (heldDirection === "ArrowRight") movePlayer(1, 0);
+          }, 100);
+        }
+      }
+    });
+
+    document.addEventListener("keyup", e => {
+      if (e.key === heldDirection) {
+        heldDirection = null;
+        clearInterval(moveInterval);
+        moveInterval = null;
+      }
+    });
+
+    generateConnectedMaze();
+    spawnDiddys(1);
+    draw();
+    setInterval(moveDiddys, 1000);
+  </script>
+</body>
+</html>
