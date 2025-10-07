@@ -12,15 +12,15 @@
     }
     #game {
       display: grid;
-      grid-template-columns: repeat(25, 10px);
-      grid-template-rows: repeat(25, 10px);
-      gap: 0px;
+      grid-template-columns: repeat(30, 15px);
+      grid-template-rows: repeat(30, 15px);
+      gap: 1px;
       margin: 20px auto;
       width: fit-content;
     }
     .cell {
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       background-color: #1c1f2b;
       border-radius: 2px;
       transition: background-color 0.2s ease;
@@ -56,7 +56,7 @@
     const game = document.getElementById("game");
     const levelDisplay = document.getElementById("level");
     const rewardDisplay = document.getElementById("reward");
-    const size = 15;
+    const size = 30;
     let level = 1;
     let playerPos = { x: 1, y: 1 };
     let diddys = [];
@@ -111,7 +111,7 @@
     function spawnDiddys(count) {
       diddys = [];
       let attempts = 0;
-      while (diddys.length < count && attempts < 1000) {
+      while (diddys.length < count && attempts < 2000) {
         const x = Math.floor(Math.random() * size);
         const y = Math.floor(Math.random() * size);
         if (
@@ -181,8 +181,8 @@
 
         if (diddys.length === 0) {
           level++;
-          if (level > 25) {
-            levelDisplay.textContent = "🎉 You completed all 25 levels!";
+          if (level > 100) {
+            levelDisplay.textContent = "🎉 You completed all 100 levels!";
             return;
           }
           levelDisplay.textContent = `Level: ${level}`;
@@ -203,7 +203,7 @@
             if (heldDirection === "ArrowDown") movePlayer(0, 1);
             if (heldDirection === "ArrowLeft") movePlayer(-1, 0);
             if (heldDirection === "ArrowRight") movePlayer(1, 0);
-          }, 100);
+          }, 50); // faster movement
         }
       }
     });
