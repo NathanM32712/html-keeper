@@ -12,8 +12,8 @@
     }
     #game {
       display: grid;
-      grid-template-columns: repeat(30, 15px);
-      grid-template-rows: repeat(30, 15px);
+      grid-template-columns: repeat(29, 15px);
+      grid-template-rows: repeat(29, 15px);
       gap: 1px;
       margin: 20px auto;
       width: fit-content;
@@ -27,6 +27,7 @@
     }
     .player {
       background-color: #00ff99;
+      box-shadow: 0 0 6px 2px #00ff99;
     }
     .diddy {
       background-color: #ff0055;
@@ -56,7 +57,7 @@
     const game = document.getElementById("game");
     const levelDisplay = document.getElementById("level");
     const rewardDisplay = document.getElementById("reward");
-    const size = 30;
+    const size = 29;
     let level = 1;
     let playerPos = { x: 1, y: 1 };
     let diddys = [];
@@ -149,27 +150,6 @@
       draw();
     }
 
-    function moveDiddys() {
-      diddys.forEach(diddy => {
-        const dirs = shuffle([
-          { dx: 1, dy: 0 },
-          { dx: -1, dy: 0 },
-          { dx: 0, dy: 1 },
-          { dx: 0, dy: -1 }
-        ]);
-        for (const dir of dirs) {
-          const nx = diddy.x + dir.dx;
-          const ny = diddy.y + dir.dy;
-          if (nx >= 0 && ny >= 0 && nx < size && ny < size && maze[ny][nx] === "empty") {
-            diddy.x = nx;
-            diddy.y = ny;
-            break;
-          }
-        }
-      });
-      draw();
-    }
-
     function checkCapture() {
       const caughtIndex = diddys.findIndex(d => d.x === playerPos.x && d.y === playerPos.y);
       if (caughtIndex !== -1) {
@@ -203,7 +183,7 @@
             if (heldDirection === "ArrowDown") movePlayer(0, 1);
             if (heldDirection === "ArrowLeft") movePlayer(-1, 0);
             if (heldDirection === "ArrowRight") movePlayer(1, 0);
-          }, 50); // faster movement
+          }, 50);
         }
       }
     });
@@ -219,7 +199,6 @@
     generateConnectedMaze();
     spawnDiddys(1);
     draw();
-    setInterval(moveDiddys, 1000);
   </script>
 </body>
 </html>
