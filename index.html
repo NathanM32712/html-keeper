@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>escape from epstine</title>
+  <title>Escape from Epstein</title>
   <style>
     body {
       background-color: #0b0f1a;
@@ -23,15 +23,16 @@
       height: 15px;
       background-color: #1c1f2b;
       border-radius: 2px;
-      transition: background-color 0.2s ease;
     }
     .player {
       background-color: #00ff99;
       box-shadow: 0 0 6px 2px #00ff99;
     }
     .diddy {
-      background-image: url('https://upload.wikimedia.org/wikipedia/commons/2/2f/Sean_Combs_2010.jpg');
-      background-size: cover;
+      background-color: #ff0055;
+    }
+    .enemy {
+      background-color: #0077ff;
     }
     .wall {
       background-color: #333;
@@ -49,7 +50,7 @@
   </style>
 </head>
 <body>
-  <h1>escape frome epstine</h1>
+  <h1>Escape from Epstein</h1>
   <div id="level">Level: 1</div>
   <div id="game"></div>
   <div id="reward">🎉 You caught a Diddy! +100 coins</div>
@@ -61,10 +62,12 @@
     const size = 29;
     let level = 1;
     let playerPos = { x: 1, y: 1 };
+    let enemyPos = { x: size - 2, y: size - 2 };
     let diddys = [];
     let maze = [];
     let heldDirection = null;
     let moveInterval = null;
+    let enemyInterval = null;
 
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
@@ -119,6 +122,7 @@
         if (
           maze[y][x] === "empty" &&
           !(x === playerPos.x && y === playerPos.y) &&
+          !(x === enemyPos.x && y === enemyPos.y) &&
           isOpenArea(x, y)
         ) {
           diddys.push({ x, y });
@@ -135,6 +139,7 @@
           cell.classList.add("cell");
           if (maze[y][x] === "wall") cell.classList.add("wall");
           if (x === playerPos.x && y === playerPos.y) cell.classList.add("player");
+          if (x === enemyPos.x && y === enemyPos.y) cell.classList.add("enemy");
           if (diddys.some(d => d.x === x && d.y === y)) cell.classList.add("diddy");
           game.appendChild(cell);
         }
@@ -148,6 +153,7 @@
       if (maze[ny][nx] === "wall") return;
       playerPos = { x: nx, y: ny };
       checkCapture();
+      checkEnemyCollision();
       draw();
     }
 
@@ -170,36 +176,63 @@
           generateConnectedMaze();
           spawnDiddys(level);
           playerPos = { x: 1, y: 1 };
+          enemyPos = { x: size - 2, y: size - 2 };
           draw();
         }
       }
     }
 
-    document.addEventListener("keydown", e => {
-      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-        heldDirection = e.key;
-        if (!moveInterval) {
-          moveInterval = setInterval(() => {
-            if (heldDirection === "ArrowUp") movePlayer(0, -1);
-            if (heldDirection === "ArrowDown") movePlayer(0, 1);
-            if (heldDirection === "ArrowLeft") movePlayer(-1, 0);
-            if (heldDirection === "ArrowRight") movePlayer(1, 0);
-          }, 50);
+    function checkEnemyCollision() {
+      if (playerPos.x === enemyPos.x && playerPos.y === enemyPos.y) {
+        alert("💥 Epstein caught you! Game over.");
+        level = 1;
+        playerPos = { x: 1, y: 1 };
+        enemyPos = { x: size - 2, y: size - 2 };
+        generateConnectedMaze();
+        spawnDiddys(level);
+        levelDisplay.textContent = `Level: ${level}`;
+        draw();
+      }
+    }
+
+    function findPath(start, goal) {
+      const queue = [[start]];
+      const visited = new Set();
+      visited.add(`${start.x},${start.y}`);
+
+      while (queue.length > 0) {
+        const path = queue.shift();
+        const { x, y } = path[path.length - 1];
+        if (x === goal.x && y === goal.y) return path;
+
+        for (const { dx, dy } of [
+          { dx: 1, dy: 0 },
+          { dx: -1, dy: 0 },
+          { dx: 0, dy: 1 },
+          { dx: 0, dy: -1 }
+        ]) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (
+            nx >= 0 && ny >= 0 && nx < size && ny < size &&
+            maze[ny][nx] === "empty" &&
+            !visited.has(`${nx},${ny}`)
+          ) {
+            visited.add(`${nx},${ny}`);
+            queue.push([...path, { x: nx, y: ny }]);
+          }
         }
       }
-    });
+      return null;
+    }
 
-    document.addEventListener("keyup", e => {
-      if (e.key === heldDirection) {
-        heldDirection = null;
-        clearInterval(moveInterval);
-        moveInterval = null;
+    function moveEnemy() {
+      const path = findPath(enemyPos, playerPos);
+      if (path && path.length > 1) {
+        enemyPos = path[1];
+        checkEnemyCollision();
+        draw();
       }
-    });
+    }
 
-    generateConnectedMaze();
-    spawnDiddys(1);
-    draw();
-  </script>
-</body>
-</html>
+    document.addEventListener
